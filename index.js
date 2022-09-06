@@ -1,31 +1,136 @@
-const year = document.getElementById("coming-year");
-const day = document.getElementById("days");
-const hour = document.getElementById("hours");
-const minute = document.getElementById("minutes");
-const second = document.getElementById("seconds");
+// countdown
+class CountDown {
+  constructor(expiredDate, onRender, onComplete) {
+      this.setExpiredDate(expiredDate);
 
-const comingYear = new Date().getFullYear() + 1;
-year.innerHTML = comingYear;
+      this.onRender = onRender;
+      this.onComplete = onComplete;
+  }
 
-function getNumber(time) {
-    return time < 10 ? `0${time}` : time;
+  setExpiredDate(expiredDate) {
+      // get the current time
+      const currentTime = new Date().getTime();
+
+      // calculate the remaining time 
+      this.timeRemaining = expiredDate.getTime() - currentTime;
+
+      this.timeRemaining <= 0 ?
+          this.complete() :
+          this.start();
   }
-  
-  function calculateRemainingTime() {
-    const now = new Date();
-    const newYearTime = new Date(`Jan 1 ${comingYear} 00:00`);
-  
-    const diff = newYearTime - now;
-  
-    const days = Math.floor(diff / 1000 / 60 / 60 / 24);
-    const hours = Math.floor((diff / 1000 / 60 / 60) % 24);
-    const minutes = Math.floor((diff / 1000 / 60) % 60);
-    const seconds = Math.floor((diff / 1000) % 60);
-  
-    day.innerHTML = getNumber(days);
-    hour.innerHTML = getNumber(hours);
-    minute.innerHTML = getNumber(minutes);
-    second.innerHTML = getNumber(seconds);
+
+  complete() {
+      if (typeof this.onComplete === 'function') {
+          onComplete();
+      }
   }
-  
-  setInterval(calculateRemainingTime, 1000);
+  getTime() {
+      return {
+          days: Math.floor(this.timeRemaining / 1000 / 60 / 60 / 24),
+          hours: Math.floor(this.timeRemaining / 1000 / 60 / 60) % 24,
+          minutes: Math.floor(this.timeRemaining / 1000 / 60) % 60,
+          seconds: Math.floor(this.timeRemaining / 1000) % 60
+      };
+  }
+
+  update() {
+      if (typeof this.onRender === 'function') {
+          this.onRender(this.getTime());
+      }
+  }
+
+  start() {
+      // update the countdown
+      this.update();
+
+      //  setup a timer
+      const intervalId = setInterval(() => {
+          // update the timer  
+          this.timeRemaining -= 1000;
+
+          if (this.timeRemaining < 0) {
+              // call the callback
+              complete();
+
+              // clear the interval if expired
+              clearInterval(intervalId);
+          } else {
+              this.update();
+          }
+
+      }, 1000);
+  }
+}
+
+// new year countdown
+// Get the new year 
+const getNewYear = () => {
+  const currentYear = new Date().getFullYear();
+  return new Date(`January 01 ${currentYear + 1} 00:00:00`);
+};
+
+// update the year element
+const year = document.querySelector('.year');
+year.innerHTML = getNewYear().getFullYear();
+
+// select elements
+const app = document.querySelector('.countdown-timer');
+const message = document.querySelector('.message');
+const heading = document.querySelector('h1');
+
+const format = (t) => {
+  return t < 10 ? '0' + t : t;
+};
+
+const render = (time) => {
+  app.innerHTML = `
+      <div class="count-down">
+          <div class="timer">
+              <h2 class="days">${format(time.days)}</h2>
+              <small>Days</small>
+          </div>
+          <div class="timer">
+              <h2 class="hours">${format(time.hours)}</h2>
+              <small>Hours</small>
+          </div>
+          <div class="timer">
+              <h2 class="minutes">${format(time.minutes)}</h2>
+              <small>Minutes</small>
+          </div>
+          <div class="timer">
+              <h2 class="seconds">${format(time.seconds)}</h2>
+              <small>Seconds</small>
+          </div>
+      </div>
+      `;
+};
+
+const showMessage = () => {
+  message.innerHTML = `Happy New Year ${newYear}!`;
+  app.innerHTML = '';
+  heading.style.display = 'none';
+};
+
+const hideMessage = () => {
+  message.innerHTML = '';
+  heading.style.display = 'block';
+};
+
+const complete = () => {
+  showMessage();
+
+  // restart the countdown after showing the 
+  // greeting message for a day ()
+  setTimeout(() => {
+      hideMessage();
+      countdownTimer.setExpiredDate(getNewYear());
+  }, 1000 * 60 * 60 * 24);
+};
+
+const countdownTimer = new CountDown(
+  getNewYear(),
+  render,
+  complete
+);
+
+
